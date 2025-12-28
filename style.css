@@ -138,3 +138,14 @@ pre {
     opacity: 0;
   }
 }
+/* =========================
+   PROMPT STYLING
+   ========================= */
+
+.prompt {
+  color: var(--text);
+}
+
+.input {
+  color: var(--text);
+}
