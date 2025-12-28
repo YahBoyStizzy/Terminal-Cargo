@@ -48,7 +48,8 @@ INCORRECT CREDENTIALS
 `
 };
 
-const terminal = document.getElementById("terminal");
+const terminal = document.getElementById("content");
+
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
