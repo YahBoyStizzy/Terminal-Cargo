@@ -16,14 +16,17 @@ async function typeLine(text, speed = 40) {
   isTyping = true;
   for (let char of text) {
     content.textContent += char;
+    scrollToBottom(); // Ensure we scroll down as we type
     await sleep(speed);
   }
   content.textContent += "\n";
+  scrollToBottom();
   isTyping = false;
 }
 
 function prompt() {
   content.textContent += "> ";
+  scrollToBottom();
 }
 
 // --------------------
@@ -65,10 +68,12 @@ function handleCommand(cmd) {
   const command = cmd.trim().toUpperCase();
 
   content.textContent += command + "\n";
+  scrollToBottom();
 
   switch (command) {
     case "HELP":
       content.textContent +=
+      scrollToBottom();
 `AVAILABLE COMMANDS:
 - HELP
 - LOGS
@@ -81,6 +86,7 @@ function handleCommand(cmd) {
 
     case "LOGS":
       content.textContent +=
+      scrollToBottom();
 `ACCESSING SHIP LOGS...
 ERROR: MULTIPLE ENTRIES CORRUPTED
 LAST CLEAN LOG: DAY 184
@@ -90,6 +96,7 @@ LAST CLEAN LOG: DAY 184
 
     case "CREW":
       content.textContent +=
+      scrollToBottom();
 `CREW ROSTER:
 - CAPTAIN: STATUS UNKNOWN
 - ENGINEER: DECEASED
@@ -101,6 +108,7 @@ LAST CLEAN LOG: DAY 184
 
     case "SECURITY":
       content.textContent +=
+      scrollToBottom();
 `SECURITY STATUS:
 LOCKDOWNS: PARTIAL
 CAMERAS: OFFLINE
@@ -111,6 +119,7 @@ THREAT INDEX: ELEVATED
 
     case "CLEAR":
       content.textContent = "";
+      scrollToBottom();
       break;
 
     default:
@@ -146,4 +155,12 @@ document.addEventListener("keydown", (e) => {
 // --------------------
 setTimeout(() => {
   bootSequence();
-}, 30000); // 30 seconds
+}, 15000); // 15 seconds
+
+// --------------------
+// AUTO-SCROLL TERMINAL
+// --------------------
+function scrollToBottom() {
+  const terminal = document.getElementById("terminal");
+  terminal.scrollTop = terminal.scrollHeight;
+}

@@ -177,3 +177,25 @@ pre {
   white-space: pre-wrap;
   word-break: break-word;
 }
+/* =========================
+   PREVENT SCREEN GROWTH
+   ========================= */
+
+.screen {
+  height: 360px; /* adjust until ~14 lines fit */
+  overflow: hidden;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+#terminal {
+  height: 100%;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  scrollbar-width: none; /* Firefox */
+}
+
+#terminal::-webkit-scrollbar {
+  display: none; /* Chrome */
+}
