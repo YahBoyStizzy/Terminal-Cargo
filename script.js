@@ -1,205 +1,149 @@
-/* =========================
-   GM DEVICE TOGGLE
-   ========================= */
-
-const CRT = true;
-const TABLET = false;
-
-/* =========================
-   BOOT SETTINGS
-   ========================= */
-
-const BOOT_DELAY = 30000; // 30 seconds
-const TYPING_SPEED = 35;
-
-/* =========================
-   DEVICE SETUP
-   ========================= */
-
-const device = document.querySelector(".device");
-const terminal = document.getElementById("content");
+const content = document.getElementById("content");
+const cursor = document.getElementById("cursor");
 const pdaStatus = document.getElementById("pda-status");
-const batteryDisplay = document.getElementById("battery");
 
-if (CRT) {
-  device.classList.add("crt-mode");
-  device.classList.remove("datapad-mode");
+let isTyping = false;
+let inputBuffer = "";
+
+// --------------------
+// UTILITIES
+// --------------------
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-if (TABLET) {
-  device.classList.add("datapad-mode");
-  device.classList.remove("crt-mode");
+async function typeLine(text, speed = 40) {
+  isTyping = true;
+  for (let char of text) {
+    content.textContent += char;
+    await sleep(speed);
+  }
+  content.textContent += "\n";
+  isTyping = false;
+}
+
+function prompt() {
+  content.textContent += "> ";
+}
+
+// --------------------
+// BOOT SEQUENCE
+// --------------------
+async function bootSequence() {
+  await typeLine("SYS_BOOT SEQ 00.77", 50);
+  await sleep(600);
+
+  await typeLine("MEMORY CHECK ........ OK", 30);
+  await sleep(400);
+
+  await typeLine("POWER CORE STATUS ... STABLE", 30);
+  await sleep(400);
+
+  await typeLine("NAVIGATION ARRAY ... OFFLINE", 30);
+  await sleep(400);
+
+  await typeLine("LIFE SUPPORT ....... DEGRADED", 30);
+  await sleep(600);
+
+  await typeLine("SECURITY PROTOCOLS . ACTIVE", 30);
+  await sleep(600);
+
+  await typeLine("AUTHORIZATION REQUIRED", 50);
+  await sleep(800);
+
+  await typeLine("TYPE 'HELP' FOR AVAILABLE COMMANDS", 40);
+  await sleep(400);
+
   pdaStatus.style.display = "block";
+  prompt();
 }
 
-/* =========================
-   TERMINAL STATE
-   ========================= */
+// --------------------
+// COMMAND HANDLER
+// --------------------
+function handleCommand(cmd) {
+  const command = cmd.trim().toUpperCase();
 
-let acceptingInput = false;
-let currentInput = "";
-let currentLocation = "root";
+  content.textContent += command + "\n";
 
-/* =========================
-   PDA BATTERY (COSMETIC)
-   ========================= */
+  switch (command) {
+    case "HELP":
+      content.textContent +=
+`AVAILABLE COMMANDS:
+- HELP
+- LOGS
+- CREW
+- SECURITY
+- CLEAR
 
-let batteryLevel = 87;
+`;
+      break;
 
-function drainBattery() {
-  if (!TABLET) return;
-  if (batteryLevel > 12) batteryLevel--;
-  batteryDisplay.textContent = batteryLevel + "%";
-}
+    case "LOGS":
+      content.textContent +=
+`ACCESSING SHIP LOGS...
+ERROR: MULTIPLE ENTRIES CORRUPTED
+LAST CLEAN LOG: DAY 184
 
-setInterval(drainBattery, 60000); // 1% per minute
+`;
+      break;
 
-/* =========================
-   BOOT SEQUENCE
-   ========================= */
-
-const bootLines = [
-  "POWER SIGNAL DETECTED",
-  "INITIALIZING SYSTEM CORE",
-  "MEMORY CHECK ........ OK",
-  "SECURITY LAYERS ...... ACTIVE",
-  "LINKING SUBSYSTEMS ...",
-  "",
-  "WELCOME, USER",
-  "TYPE 'help' FOR AVAILABLE COMMANDS",
-  ""
-];
-
-let bootLine = 0;
-let charIndex = 0;
-
-function typeBoot() {
-  if (bootLine >= bootLines.length) {
-    showPrompt();
-    return;
-  }
-
-  const line = bootLines[bootLine];
-
-  if (charIndex < line.length) {
-    terminal.textContent += line.charAt(charIndex);
-    charIndex++;
-    setTimeout(typeBoot, TYPING_SPEED);
-  } else {
-    terminal.textContent += "\n";
-    bootLine++;
-    charIndex = 0;
-    setTimeout(typeBoot, 300);
-  }
-}
-
-/* =========================
-   PROMPT
-   ========================= */
-
-function showPrompt() {
-  terminal.textContent += `[${currentLocation}]> `;
-  acceptingInput = true;
-  currentInput = "";
-}
-
-/* =========================
-   LOCATIONS / SECTIONS
-   ========================= */
-
-const locations = {
-  root: `
-AVAILABLE LOCATIONS:
-- logs
-- crew
-- security
-- personal
-`,
-
-  logs: `
-SYSTEM LOGS:
-LOG 001: CREW TRANSFER COMPLETE
-LOG 014: DISTRESS SIGNAL RECEIVED
-LOG 022: AI RESPONSE DELAY
-`,
-
-  crew: `
-CREW ROSTER:
+    case "CREW":
+      content.textContent +=
+`CREW ROSTER:
 - CAPTAIN: STATUS UNKNOWN
-- ENGINEER: NO RESPONSE
-- MEDICAL: DECEASED
-`,
+- ENGINEER: DECEASED
+- MEDICAL: MISSING
+- YOU
 
-  security: `
-SECURITY SYSTEM:
+`;
+      break;
+
+    case "SECURITY":
+      content.textContent +=
+`SECURITY STATUS:
+LOCKDOWNS: PARTIAL
 CAMERAS: OFFLINE
-LOCKS: PARTIAL CONTROL
-ALERT STATUS: AMBER
-`,
+THREAT INDEX: ELEVATED
 
-  personal: `
-PERSONAL DATA:
-DAILY TASKS:
-- CHECK POWER COUPLINGS
-- FILE INCIDENT REPORT
-- REST (OPTIONAL)
-`
-};
+`;
+      break;
 
-/* =========================
-   COMMAND HANDLER
-   ========================= */
+    case "CLEAR":
+      content.textContent = "";
+      break;
 
-function runCommand(cmd) {
-  const lower = cmd.toLowerCase();
+    default:
+      content.textContent += "UNKNOWN COMMAND\n\n";
+  }
 
-  if (lower === "help") {
-    terminal.textContent += locations.root + "\n";
-  }
-  else if (locations[lower]) {
-    currentLocation = lower;
-    terminal.textContent += locations[lower] + "\n";
-  }
-  else if (lower === "clear") {
-    terminal.textContent = "";
-  }
-  else {
-    terminal.textContent += "UNKNOWN COMMAND\n";
-  }
+  prompt();
 }
 
-/* =========================
-   INPUT HANDLING
-   ========================= */
+// --------------------
+// INPUT LISTENER
+// --------------------
+document.addEventListener("keydown", (e) => {
+  if (isTyping) return;
 
-window.addEventListener("keydown", (e) => {
-  if (!acceptingInput) return;
-
-  if (e.key === "Enter") {
-    acceptingInput = false;
-    terminal.textContent += "\n";
-    runCommand(currentInput);
-    showPrompt();
-  }
-  else if (e.key === "Backspace") {
-    if (currentInput.length > 0) {
-      currentInput = currentInput.slice(0, -1);
-      terminal.textContent = terminal.textContent.slice(0, -1);
-    }
-  }
+  if (e.key === "Backspace") {
+    inputBuffer = inputBuffer.slice(0, -1);
+    content.textContent = content.textContent.slice(0, -1);
+  } 
+  else if (e.key === "Enter") {
+    content.textContent += "\n";
+    handleCommand(inputBuffer);
+    inputBuffer = "";
+  } 
   else if (e.key.length === 1) {
-    currentInput += e.key;
-    terminal.textContent += e.key;
+    inputBuffer += e.key;
+    content.textContent += e.key;
   }
 });
 
-/* =========================
-   INITIAL POWER-OFF STATE
-   ========================= */
-
-terminal.textContent = "";
-acceptingInput = false;
-
+// --------------------
+// STARTUP DELAY
+// --------------------
 setTimeout(() => {
-  typeBoot();
-}, BOOT_DELAY);
+  bootSequence();
+}, 30000); // 30 seconds
